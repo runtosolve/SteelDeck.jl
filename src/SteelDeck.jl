@@ -5,11 +5,11 @@ using CUFSM, SectionProperties, AISIS100
 
 struct BareGeometry
 
-    L::Vector{Float64}
-    θ::Vector{Float64}
-    n::Vector{Int}
-    r::Vector{Float64}
-    n_r::Vector{Int}
+    # L::Vector{Float64}
+    # θ::Vector{Float64}
+    # n::Vector{Int}
+    # r::Vector{Float64}
+    # n_r::Vector{Int}
     t::Float64
 
     cross_section::Vector{Vector{Float64}}
@@ -258,11 +258,11 @@ function calculate_all_bare_properties(inputs)
 
         bare_geometry_all[i] = SteelDeck.BareGeometry(
 
-            L,
-            θ,
-            n,
-            r,
-            n_r,
+            # L,
+            # θ,
+            # n,
+            # r,
+            # n_r,
             t[i],
 
             cross_section,
