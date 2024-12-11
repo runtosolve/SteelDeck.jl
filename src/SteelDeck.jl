@@ -1,11 +1,21 @@
 module SteelDeck
 
-using CUFSM, SectionProperties, AISIS100, SDIComposite, OrderedCollections, NonlinearSolve
+using CUFSM, SectionProperties, AISIS100, SDIComposite, OrderedCollections, NonlinearSolve, Statistics, CrossSectionGeometry, DataFrames
 
-include("BareProperties.jl")
+include("BareDeckProperties.jl")
 
-include("CompositeProperties.jl")
+include("CompositeFlexuralProperties.jl")
+
+include("WebCrippling.jl")
+
+include("BareShear.jl")
+
+include("OneWayCompositeShear.jl")
 
 include("ConstructionSpans.jl")
+
+include("SuperimposedLoads.jl")
+
+include("DeckTables.jl")
 
 end # module SteelDeck

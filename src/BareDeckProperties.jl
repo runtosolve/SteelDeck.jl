@@ -1,4 +1,3 @@
-
 struct BareGeometry
 
     t::Float64
@@ -10,55 +9,74 @@ struct BareGeometry
 end
 
 
-struct BareProperties
+struct BareDeckInputs 
 
-    section_properties::CUFSM.SectionPropertiesObject
+    t
 
-    fy::Float64
-    E::Float64 
+    L 
+    θ
+    n 
+    r
+    n_r
+    cross_section 
 
-    panel_depth::Float64
-    unit_width::Float64
+    E
+    fy 
 
-    local_buckling_pos::CUFSM.Model
-    local_buckling_neg::CUFSM.Model
+    panel_depth 
+    unit_width 
+
+    half_wavelengths
+
+end
+
+
+
+struct BareDeckOutputs
+
+    inputs
     
-    Mcrℓ_pos::Float64
-    Mcrℓ_neg::Float64 
+    section_properties
 
-    Mcrℓ_pos_unit::Float64
-    Mcrℓ_neg_unit::Float64 
-
-    y_top::Float64
-    y_bottom::Float64
-
-    Ixx::Float64
-    Ixx_unit::Float64
-
-    S_pos_unit::Float64
-    S_neg_unit::Float64
-
-    My_pos_unit::Float64
-    My_neg_unit::Float64
-    My_unit::Float64
-
-    Mnℓ_pos_unit::Float64
-    Mnℓ_neg_unit::Float64
-
-    aMnℓ_pos_unit_ASD::Float64
-    aMnℓ_neg_unit_ASD::Float64
-
-    aMnℓ_pos_unit_LRFD::Float64
-    aMnℓ_neg_unit_LRFD::Float64
+    local_buckling_pos
+    local_buckling_neg
     
-    Md_pos_unit::Float64
-    Md_neg_unit::Float64
+    Mcrℓ_pos
+    Mcrℓ_neg
 
-    I_eff_pos_unit::Float64
-    I_eff_neg_unit::Float64
+    Mcrℓ_pos_unit
+    Mcrℓ_neg_unit
 
-    S_pos_eff_unit::Float64
-    S_neg_eff_unit::Float64
+    y_top
+    y_bottom
+
+    Ixx
+    Ixx_unit
+
+    S_pos_unit
+    S_neg_unit
+
+    My_pos_unit
+    My_neg_unit
+    My_unit
+
+    Mnℓ_pos_unit
+    Mnℓ_neg_unit
+
+    aMnℓ_pos_unit_ASD
+    aMnℓ_neg_unit_ASD
+
+    aMnℓ_pos_unit_LRFD
+    aMnℓ_neg_unit_LRFD
+    
+    Md_pos_unit
+    Md_neg_unit
+
+    I_eff_pos_unit
+    I_eff_neg_unit
+
+    S_pos_eff_unit
+    S_neg_eff_unit
  
 end
 
@@ -96,10 +114,33 @@ function calculate_bare_deck_local_buckling(cross_section, t, E, lengths, Mxx)
 
 end
 
-function calculate_bare_properties(inputs)
+function calculate_bare_deck_properties(inputs)
 
     #Unpack inputs:
-    cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
+    (;
+    
+    t,
+
+    L,
+    θ,
+    n,
+    r,
+    n_r,
+    cross_section, 
+
+    E,
+    fy, 
+
+    panel_depth, 
+    unit_width, 
+
+    half_wavelengths
+    
+    ) = inputs 
+
+
+
+    # cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
 
     #Find number of cross-section elements:
     num_elem = size(cross_section)[1] - 1;
@@ -170,55 +211,56 @@ function calculate_bare_properties(inputs)
     Ixx_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
     S_neg_eff_unit = Ixx_eff_neg_unit / y_bottom
 
-    bare_properties = BareProperties(
-                    section_properties,
-                    fy,
-                    E,
+    outputs = BareDeckOutputs(
+    
+        inputs,
+        
+        section_properties,
+    
+        local_buckling_pos,
+        local_buckling_neg,
+        
+        Mcrℓ_pos,
+        Mcrℓ_neg,
+    
+        Mcrℓ_pos_unit,
+        Mcrℓ_neg_unit,
+    
+        y_top,
+        y_bottom,
+    
+        Ixx,
+        Ixx_unit,
+    
+        S_pos_unit,
+        S_neg_unit,
+    
+        My_pos_unit,
+        My_neg_unit,
+        My_unit,
+    
+        Mnℓ_pos_unit,
+        Mnℓ_neg_unit,
+    
+        aMnℓ_pos_unit_ASD,
+        aMnℓ_neg_unit_ASD,
+    
+        aMnℓ_pos_unit_LRFD,
+        aMnℓ_neg_unit_LRFD,
+        
+        Md_pos_unit,
+        Md_neg_unit,
+    
+        Ixx_eff_pos_unit,
+        Ixx_eff_neg_unit,
+    
+        S_pos_eff_unit,
+        S_neg_eff_unit,
+     
+    )
 
-                    panel_depth,
-                    unit_width,
+    return outputs
 
-                    local_buckling_pos,
-                    local_buckling_neg,
-
-                    Mcrℓ_pos,
-                    Mcrℓ_neg,
-
-                    Mcrℓ_pos_unit,
-                    Mcrℓ_neg_unit,
-
-                    y_top,
-                    y_bottom,
-
-                    Ixx,
-                    Ixx_unit,
-
-                    S_pos_unit,
-                    S_neg_unit,
-
-                    My_pos_unit,
-                    My_neg_unit,
-                    My_unit,
-
-                    Mnℓ_pos_unit,
-                    Mnℓ_neg_unit,
-
-                    aMnℓ_pos_unit_ASD,
-                    aMnℓ_neg_unit_ASD,
-
-                    aMnℓ_pos_unit_LRFD,
-                    aMnℓ_neg_unit_LRFD,
-
-                    Md_pos_unit,
-                    Md_neg_unit,
-
-                    Ixx_eff_pos_unit,
-                    Ixx_eff_neg_unit,
-
-                    S_pos_eff_unit,
-                    S_neg_eff_unit)
-
-    return bare_properties 
 
 end
 
