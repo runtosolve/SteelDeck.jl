@@ -12,7 +12,7 @@ function calculate_all_bare_deck_properties(t, panel_depth, unit_width, fy, E, h
 
 
     #Scale cross-section by 2 since scale is applied in drawing:
-    cross_section = cross_section .* 2.0;
+    cross_section = cross_section .* 2.0;  #hard coded!!!!!
 
     #Convert dimensions from mm to inches:
     cross_section = cross_section ./ 25.4;
