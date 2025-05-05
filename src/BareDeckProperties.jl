@@ -13,11 +13,11 @@ struct BareDeckInputs
 
     t
 
-    L 
-    θ
-    n 
-    r
-    n_r
+    # L 
+    # θ
+    # n 
+    # r
+    # n_r
     cross_section 
 
     E
@@ -121,11 +121,11 @@ function calculate_bare_deck_properties(inputs)
     
     t,
 
-    L,
-    θ,
-    n,
-    r,
-    n_r,
+    # L,
+    # θ,
+    # n,
+    # r,
+    # n_r,
     cross_section, 
 
     E,
@@ -266,46 +266,46 @@ end
 
 
 
-function calculate_all_bare_properties(inputs)
+# function calculate_all_bare_properties(inputs)
 
-    #t should be a vector here 
-    cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
+#     #t should be a vector here 
+#     cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
 
-    bare_geometry_all = Vector{SteelDeck.BareGeometry}(undef, length(t))
-    bare_properties_all = Vector{SteelDeck.BareProperties}(undef, length(t))
+#     bare_geometry_all = Vector{SteelDeck.BareGeometry}(undef, length(t))
+#     bare_properties_all = Vector{SteelDeck.BareProperties}(undef, length(t))
 
-    for i in eachindex(t)
+#     for i in eachindex(t)
 
-        #Zero cross-section considering thickness:
+#         #Zero cross-section considering thickness:
 
-        X = [cross_section[i][1] for i in eachindex(cross_section)];
-        Y = [cross_section[i][2] for i in eachindex(cross_section)];
+#         X = [cross_section[i][1] for i in eachindex(cross_section)];
+#         Y = [cross_section[i][2] for i in eachindex(cross_section)];
 
-        ΔX = -minimum(X)
-        ΔY = -minimum(Y) + t[i] / 2
+#         ΔX = -minimum(X)
+#         ΔY = -minimum(Y) + t[i] / 2
 
-        X .+= ΔX
-        Y .+= ΔY
+#         X .+= ΔX
+#         Y .+= ΔY
 
-        cross_section = [[X[i], Y[i]] for i in eachindex(cross_section)]
+#         cross_section = [[X[i], Y[i]] for i in eachindex(cross_section)]
 
-        bare_geometry_all[i] = SteelDeck.BareGeometry(
+#         bare_geometry_all[i] = SteelDeck.BareGeometry(
 
-            t[i],
+#             t[i],
 
-            cross_section,
-            X,
-            Y
-        )
+#             cross_section,
+#             X,
+#             Y
+#         )
 
-        inputs = (cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width)
+#         inputs = (cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width)
 
-        cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width = inputs
+#         cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width = inputs
 
-        bare_properties_all[i] = SteelDeck.calculate_bare_properties(inputs)
+#         bare_properties_all[i] = SteelDeck.calculate_bare_properties(inputs)
 
-    end
+#     end
 
-    return bare_geometry_all, bare_properties_all
+#     return bare_geometry_all, bare_properties_all
 
-end
+# end

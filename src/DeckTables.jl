@@ -1,21 +1,21 @@
 
 
-function calculate_all_bare_deck_properties(t, panel_depth, unit_width, fy, E, half_wavelengths, L, θ, n, r, n_r)
+function calculate_all_bare_deck_properties(t, panel_depth, unit_width, fy, E, half_wavelengths, cross_section)
 
 
-    #Discretize cross-section:
-    cross_section = CrossSectionGeometry.generate_thin_walled(L, θ, n, r, n_r);
+    # #Discretize cross-section:
+    # cross_section = CrossSectionGeometry.generate_thin_walled(L, θ, n, r, n_r);
 
 
-    #Remove left end leg:
-    cross_section = cross_section[(n[1] + Int(n_r[1]/2) + 1):end];
+    # #Remove left end leg:
+    # cross_section = cross_section[(n[1] + Int(n_r[1]/2) + 1):end];
 
 
-    #Scale cross-section by 2 since scale is applied in drawing:
-    cross_section = cross_section .* 2.0;  #hard coded!!!!!
+    # #Scale cross-section by 2 since scale is applied in drawing:
+    # cross_section = cross_section .* 2.0;  #hard coded!!!!!
 
-    #Convert dimensions from mm to inches:
-    cross_section = cross_section ./ 25.4;
+    # #Convert dimensions from mm to inches:
+    # cross_section = cross_section ./ 25.4;
 
 
     bare_deck_properties_all = Vector{SteelDeck.BareDeckOutputs}(undef, length(t))
@@ -26,11 +26,11 @@ function calculate_all_bare_deck_properties(t, panel_depth, unit_width, fy, E, h
             
             t[i],
 
-            L,
-            θ,
-            n,
-            r,
-            n_r,
+            # L,
+            # θ,
+            # n,
+            # r,
+            # n_r,
             cross_section, 
 
             E,
