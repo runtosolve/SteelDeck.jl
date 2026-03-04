@@ -55,13 +55,21 @@ struct BareDeckOutputs
 
     S_pos_unit
     S_neg_unit
+    Sp_unit
 
     My_pos_unit
     My_neg_unit
     My_unit
+    M_plastic_unit
 
     Mnℓ_pos_unit
     Mnℓ_neg_unit
+
+    Mnℓ_pos_unit_v24
+    aMnℓ_pos_unit_ASD_v24
+
+    Mnℓ_neg_unit_v24
+    aMnℓ_neg_unit_ASD_v24
 
     aMnℓ_pos_unit_ASD
     aMnℓ_neg_unit_ASD
@@ -77,7 +85,7 @@ struct BareDeckOutputs
 
     S_pos_eff_unit
     S_neg_eff_unit
- 
+
 end
 
 
@@ -150,6 +158,26 @@ function calculate_bare_deck_properties(inputs)
     section_properties = SectionProperties.open_thin_walled(center, t * ones(Float64, num_elem))
 
 
+
+    #Calculate plastic section properties:
+    X = [cross_section[i][1] for i in eachindex(cross_section)]
+    Y = [cross_section[i][2] for i in eachindex(cross_section)]
+
+    num_nodes        = length(X)
+    node_geometry    = Float64[X Y] 
+    node_start       = Float64.(collect(1:num_nodes-1))
+    node_end         = Float64.(collect(2:num_nodes))
+    elem_thicknesses = fill(t, num_nodes-1)
+    element_definitions = hcat(node_start, node_end, elem_thicknesses)
+    plastic_properties = SectionProperties.calculate_plastic_section_properties(node_geometry, element_definitions, "x")
+    Sp = plastic_properties.Z
+    Sp_unit = Sp / unit_width
+    M_plastic_unit = Sp_unit *fy
+
+    
+
+
+
     #Calculate positive local buckling moment:
     lengths = half_wavelengths
     Mxx = +1.0
@@ -179,8 +207,10 @@ function calculate_bare_deck_properties(inputs)
     Ixx = section_properties.Ixx
     Ixx_unit = Ixx / unit_width 
 
-    y_top = panel_depth - section_properties.yc 
-    y_bottom = section_properties.yc 
+    
+    y_bottom = section_properties.yc
+    y_top = panel_depth - y_bottom 
+
 
     S_pos_unit = Ixx_unit / y_top
     S_neg_unit = Ixx_unit / y_bottom
@@ -191,6 +221,28 @@ function calculate_bare_deck_properties(inputs)
     My_unit = minimum([My_pos_unit, My_neg_unit])
 
 
+    #Calculate ASD Mnl 2024:
+    ks = M_plastic_unit / My_unit
+    αs = 1.0
+    yc = y_top
+    d = panel_depth
+    βs = max(2*yc/d,0.4)
+    My3 = M_plastic_unit - (M_plastic_unit - My_unit)/9
+    design_code = "ASD"
+    Mnℓ_pos_unit_v24, aMnℓ_pos_unit_ASD_v24 = AISIS100.v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs, My3, design_code)   
+
+
+    ks = M_plastic_unit / My_unit
+    αs = 1.0
+    yc = y_bottom
+    d = panel_depth
+    βs = max(2*yc/d,0.4)
+    My3 = M_plastic_unit - (M_plastic_unit - My_unit)/9
+    design_code = "ASD"
+    Mnℓ_neg_unit_v24, aMnℓ_neg_unit_ASD_v24 = AISIS100.v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs, My3, design_code)  
+
+
+    
     #Calculate ASD Mnl:
     design_code = "AISI S100-16 ASD"
     Mnℓ_pos_unit, aMnℓ_pos_unit_ASD = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, design_code)
@@ -234,14 +286,22 @@ function calculate_bare_deck_properties(inputs)
     
         S_pos_unit,
         S_neg_unit,
+        Sp_unit,
     
         My_pos_unit,
         My_neg_unit,
         My_unit,
+        M_plastic_unit,
     
         Mnℓ_pos_unit,
         Mnℓ_neg_unit,
-    
+
+        Mnℓ_pos_unit_v24,
+        aMnℓ_pos_unit_ASD_v24,
+
+        Mnℓ_neg_unit_v24,
+        aMnℓ_neg_unit_ASD_v24,
+
         aMnℓ_pos_unit_ASD,
         aMnℓ_neg_unit_ASD,
     

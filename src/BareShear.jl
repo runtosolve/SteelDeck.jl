@@ -25,18 +25,26 @@ struct BareShearOutputs
     h 
 
     Aw 
-    Vy 
+    Vy
 
     Fcr
     Vcr 
 
-    Vn_web 
-    aVn_web_ASD 
-    aVn_web_LRFD 
+    Vn_web
+    Vn_web_v24
 
-    Vn_unit 
+    aVn_web_ASD
+    aVn_web_ASD_v24
+    aVn_web_LRFD
+    aVn_web_LRFD_v24 
+
+    Vn_unit
+    Vn_unit_v24
+        
     aVn_unit_ASD
-    aVn_unit_LRFD 
+    aVn_unit_ASD_v24
+    aVn_unit_LRFD
+    aVn_unit_LRFD_v24
 
 end
 
@@ -80,6 +88,16 @@ function calculate_bare_shear_strength(inputs)
     aVn_unit_ASD = aVn_web_ASD * number_of_webs_per_panel / unit_width
     aVn_unit_LRFD = aVn_web_LRFD * number_of_webs_per_panel / unit_width
 
+    ### Calculations based on v2024
+    design_code = "ASD"
+    Vn_web_v24, aVn_web_ASD_v24 = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_code)
+
+    design_code = "LRFD"
+    Vn_web_v24, aVn_web_LRFD_v24 = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_code)
+
+    Vn_unit_v24 = Vn_web_v24 * number_of_webs_per_panel / unit_width
+    aVn_unit_ASD_v24 = aVn_web_ASD_v24 * number_of_webs_per_panel / unit_width
+    aVn_unit_LRFD_v24 = aVn_web_LRFD_v24 * number_of_webs_per_panel / unit_width
 
     outputs =    BareShearOutputs(
         inputs, 
@@ -92,13 +110,22 @@ function calculate_bare_shear_strength(inputs)
         Fcr,
         Vcr, 
 
-        Vn_web, 
-        aVn_web_ASD, 
-        aVn_web_LRFD, 
+        Vn_web,
+        Vn_web_v24,
 
-        Vn_unit, 
+        aVn_web_ASD,
+        aVn_web_ASD_v24, 
+        aVn_web_LRFD,
+        aVn_web_LRFD_v24, 
+
+        Vn_unit,
+        Vn_unit_v24,
+
         aVn_unit_ASD,
-        aVn_unit_LRFD 
+        aVn_unit_ASD_v24,
+        aVn_unit_LRFD,
+        aVn_unit_LRFD_v24,
+
     )
 
 
