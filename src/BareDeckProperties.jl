@@ -9,38 +9,36 @@ struct BareGeometry
 end
 
 
-struct BareDeckInputs 
+struct BareDeckInputs
 
     t
 
-    # L 
+    # L
     # θ
-    # n 
+    # n
     # r
     # n_r
-    cross_section 
+    cross_section
 
     E
-    fy 
 
-    panel_depth 
-    unit_width 
+    panel_depth
+    unit_width
 
     half_wavelengths
 
 end
 
 
-
-struct BareDeckOutputs
+struct BareDeckBaseOutputs
 
     inputs
-    
+
     section_properties
 
     local_buckling_pos
     local_buckling_neg
-    
+
     Mcrℓ_pos
     Mcrℓ_neg
 
@@ -55,10 +53,24 @@ struct BareDeckOutputs
 
     S_pos_unit
     S_neg_unit
+    Sp_unit
+
+end
+
+
+struct BareDeckOutputs
+
+    base_outputs
+
+    t_mm
+    t_in
+
+    fy
 
     My_pos_unit
     My_neg_unit
     My_unit
+    M_plastic_unit
 
     Mnℓ_pos_unit
     Mnℓ_neg_unit
@@ -68,7 +80,7 @@ struct BareDeckOutputs
 
     aMnℓ_pos_unit_LRFD
     aMnℓ_neg_unit_LRFD
-    
+
     Md_pos_unit
     Md_neg_unit
 
@@ -77,11 +89,9 @@ struct BareDeckOutputs
 
     S_pos_eff_unit
     S_neg_eff_unit
- 
+
 end
 
-
-    
 
 
 
@@ -94,7 +104,7 @@ function calculate_bare_deck_local_buckling(cross_section, t, E, lengths, Mxx)
     x_center = [cross_section[i][1] for i in eachindex(cross_section)];
     y_center = [cross_section[i][2] for i in eachindex(cross_section)];
 
-    t = t * ones(Float64, num_elem) 
+    t = t * ones(Float64, num_elem)
 
     ν = 0.30
     P = 0.0
@@ -110,15 +120,16 @@ function calculate_bare_deck_local_buckling(cross_section, t, E, lengths, Mxx)
 
     model = CUFSM.Tools.open_section_analysis(x_center, y_center, t, lengths, E, ν, P, Mxx, Mzz, M11, M22, constraints, springs, supports, neigs)
 
-    return model 
+    return model
 
 end
 
-function calculate_bare_deck_properties(inputs)
+
+function calculate_bare_deck_base_properties(inputs)
 
     #Unpack inputs:
     (;
-    
+
     t,
 
     # L,
@@ -126,21 +137,16 @@ function calculate_bare_deck_properties(inputs)
     # n,
     # r,
     # n_r,
-    cross_section, 
+    cross_section,
 
     E,
-    fy, 
 
-    panel_depth, 
-    unit_width, 
+    panel_depth,
+    unit_width,
 
     half_wavelengths
-    
-    ) = inputs 
 
-
-
-    # cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
+    ) = inputs
 
     #Find number of cross-section elements:
     num_elem = size(cross_section)[1] - 1;
@@ -149,118 +155,195 @@ function calculate_bare_deck_properties(inputs)
     center = cross_section
     section_properties = SectionProperties.open_thin_walled(center, t * ones(Float64, num_elem))
 
+    #Calculate plastic section properties:
+    X = [cross_section[i][1] for i in eachindex(cross_section)]
+    Y = [cross_section[i][2] for i in eachindex(cross_section)]
+
+    num_nodes        = length(X)
+    node_geometry    = Float64[X Y]
+    node_start       = Float64.(collect(1:num_nodes-1))
+    node_end         = Float64.(collect(2:num_nodes))
+    elem_thicknesses = fill(t, num_nodes-1)
+    element_definitions = hcat(node_start, node_end, elem_thicknesses)
+    plastic_properties = SectionProperties.calculate_plastic_section_properties(node_geometry, element_definitions, "x")
+    Sp = plastic_properties.Z
+    Sp_unit = Sp / unit_width
 
     #Calculate positive local buckling moment:
     lengths = half_wavelengths
     Mxx = +1.0
     model = calculate_bare_deck_local_buckling(cross_section, t, E, lengths, Mxx)
 
-    local_buckling_pos = model 
+    local_buckling_pos = model
 
     eig = 1
     Mcrℓ_pos = minimum(CUFSM.Tools.get_load_factor(model, eig))
-
 
     #Calculate negative local buckling moment:
     lengths = half_wavelengths
     Mxx = -1.0
     model = calculate_bare_deck_local_buckling(cross_section, t, E, lengths, Mxx)
 
-    local_buckling_neg = model 
+    local_buckling_neg = model
 
     eig = 1
     Mcrℓ_neg = minimum(CUFSM.Tools.get_load_factor(model, eig))
 
     #Calculate Mcrℓ per unit width:
-    Mcrℓ_pos_unit = Mcrℓ_pos / unit_width 
-    Mcrℓ_neg_unit = Mcrℓ_neg / unit_width 
+    Mcrℓ_pos_unit = Mcrℓ_pos / unit_width
+    Mcrℓ_neg_unit = Mcrℓ_neg / unit_width
 
     #Calculate gross section moduli per unit width:
     Ixx = section_properties.Ixx
-    Ixx_unit = Ixx / unit_width 
+    Ixx_unit = Ixx / unit_width
 
-    y_top = panel_depth - section_properties.yc 
-    y_bottom = section_properties.yc 
+    y_bottom = section_properties.yc
+    y_top = panel_depth - y_bottom
 
     S_pos_unit = Ixx_unit / y_top
     S_neg_unit = Ixx_unit / y_bottom
+
+    base_outputs = BareDeckBaseOutputs(
+
+        inputs,
+
+        section_properties,
+
+        local_buckling_pos,
+        local_buckling_neg,
+
+        Mcrℓ_pos,
+        Mcrℓ_neg,
+
+        Mcrℓ_pos_unit,
+        Mcrℓ_neg_unit,
+
+        y_top,
+        y_bottom,
+
+        Ixx,
+        Ixx_unit,
+
+        S_pos_unit,
+        S_neg_unit,
+        Sp_unit,
+
+    )
+
+    return base_outputs
+
+end
+
+
+function calculate_bare_deck_properties(base_outputs, fy, S100_version)
+
+    #Unpack base outputs:
+    (;
+    t_mm,
+    t_in,
+    Mcrℓ_pos_unit,
+    Mcrℓ_neg_unit,
+    y_top,
+    y_bottom,
+    Ixx_unit,
+    S_pos_unit,
+    S_neg_unit,
+    Sp_unit,
+    inputs,
+    ) = base_outputs
+
+    panel_depth = inputs.panel_depth
+
+    #Calculate plastic moment per unit width:
+    M_plastic_unit = Sp_unit * fy
 
     #Calculate yield moment per unit width:
     My_pos_unit = fy * S_pos_unit
     My_neg_unit = fy * S_neg_unit
     My_unit = minimum([My_pos_unit, My_neg_unit])
 
+    ks  = M_plastic_unit / My_unit
+    αs  = 1.0
+    d   = panel_depth
+    My3 = M_plastic_unit - (M_plastic_unit - My_unit) / 9
 
-    #Calculate ASD Mnl:
-    design_code = "AISI S100-16 ASD"
-    Mnℓ_pos_unit, aMnℓ_pos_unit_ASD = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, design_code)
-    Mnℓ_neg_unit, aMnℓ_neg_unit_ASD = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, design_code)
+    if S100_version == "v24"
 
-    #Calculate LRFD Mnl:
-    design_code = "AISI S100-16 LRFD"
-    Mnℓ_pos_unit, aMnℓ_pos_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, design_code)
-    Mnℓ_neg_unit, aMnℓ_neg_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, design_code)
+        #Calculate Mnl (positive):
+        βs_pos = max(2*y_top/d, 0.4)
+        Mnℓ_pos_unit, aMnℓ_pos_unit_ASD  = v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "ASD")
+        Mnℓ_pos_unit, aMnℓ_pos_unit_LRFD = v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "LRFD")
 
+        #Calculate Mnl (negative):
+        βs_neg = max(2*y_bottom/d, 0.4)
+        Mnℓ_neg_unit, aMnℓ_neg_unit_ASD  = v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "ASD")
+        Mnℓ_neg_unit, aMnℓ_neg_unit_LRFD = v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "LRFD")
 
-    #Calculate the effective moment of inertia and section moduli:
-    Md_pos_unit, not_used = AISIS100.v16S3.f321(aMnℓ_pos_unit_ASD, Mcrℓ_pos_unit, design_code)
-    Ixx_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit_ASD, Ixx_unit)
-    S_pos_eff_unit = Ixx_eff_pos_unit / y_top
+        #Calculate the effective moment of inertia and section moduli:
+        Md_pos_unit, _ = v2024.f32(aMnℓ_pos_unit_ASD, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "ASD")
+        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit_ASD, Ixx_unit)
+        S_pos_eff_unit = I_eff_pos_unit / y_top
 
-    Md_neg_unit, not_used = AISIS100.v16S3.f321(aMnℓ_neg_unit_ASD, Mcrℓ_neg_unit, design_code)
-    Ixx_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
-    S_neg_eff_unit = Ixx_eff_neg_unit / y_bottom
+        Md_neg_unit, _ = v2024.f32(aMnℓ_neg_unit_ASD, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "ASD")
+        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
+        S_neg_eff_unit = I_eff_neg_unit / y_bottom
+
+    else  # v16
+
+        #Calculate ASD Mnl:
+        Mnℓ_pos_unit, aMnℓ_pos_unit_ASD  = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, "AISI S100-16 ASD")
+        Mnℓ_neg_unit, aMnℓ_neg_unit_ASD  = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, "AISI S100-16 ASD")
+
+        #Calculate LRFD Mnl:
+        Mnℓ_pos_unit, aMnℓ_pos_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, "AISI S100-16 LRFD")
+        Mnℓ_neg_unit, aMnℓ_neg_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, "AISI S100-16 LRFD")
+
+        #Calculate the effective moment of inertia and section moduli:
+        Md_pos_unit, _ = AISIS100.v16S3.f321(aMnℓ_pos_unit_ASD, Mcrℓ_pos_unit, "AISI S100-16 LRFD")
+        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit_ASD, Ixx_unit)
+        S_pos_eff_unit = I_eff_pos_unit / y_top
+
+        Md_neg_unit, _ = AISIS100.v16S3.f321(aMnℓ_neg_unit_ASD, Mcrℓ_neg_unit, "AISI S100-16 LRFD")
+        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
+        S_neg_eff_unit = I_eff_neg_unit / y_bottom
+
+    end
 
     outputs = BareDeckOutputs(
-    
-        inputs,
-        
-        section_properties,
-    
-        local_buckling_pos,
-        local_buckling_neg,
-        
-        Mcrℓ_pos,
-        Mcrℓ_neg,
-    
-        Mcrℓ_pos_unit,
-        Mcrℓ_neg_unit,
-    
-        y_top,
-        y_bottom,
-    
-        Ixx,
-        Ixx_unit,
-    
-        S_pos_unit,
-        S_neg_unit,
-    
+
+        base_outputs,
+
+        t_mm,
+        t_in,
+
+        fy,
+
         My_pos_unit,
         My_neg_unit,
         My_unit,
-    
+        M_plastic_unit,
+
         Mnℓ_pos_unit,
         Mnℓ_neg_unit,
-    
+
         aMnℓ_pos_unit_ASD,
         aMnℓ_neg_unit_ASD,
-    
+
         aMnℓ_pos_unit_LRFD,
         aMnℓ_neg_unit_LRFD,
-        
+
         Md_pos_unit,
         Md_neg_unit,
-    
-        Ixx_eff_pos_unit,
-        Ixx_eff_neg_unit,
-    
+
+        I_eff_pos_unit,
+        I_eff_neg_unit,
+
         S_pos_eff_unit,
         S_neg_eff_unit,
-     
+
     )
 
     return outputs
-
 
 end
 
@@ -268,7 +351,7 @@ end
 
 # function calculate_all_bare_properties(inputs)
 
-#     #t should be a vector here 
+#     #t should be a vector here
 #     cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
 
 #     bare_geometry_all = Vector{SteelDeck.BareGeometry}(undef, length(t))

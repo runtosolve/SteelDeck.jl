@@ -19,30 +19,32 @@ end
 
 
 struct BareShearOutputs
-        
-    inputs 
 
-    h 
+    inputs
 
-    Aw 
-    Vy 
+    h
+
+    Aw
+    Vy
 
     Fcr
-    Vcr 
+    Vcr
 
-    Vn_web 
-    aVn_web_ASD 
-    aVn_web_LRFD 
+    Vn_web
 
-    Vn_unit 
+    aVn_web_ASD
+    aVn_web_LRFD
+
+    Vn_unit
+
     aVn_unit_ASD
-    aVn_unit_LRFD 
+    aVn_unit_LRFD
 
 end
 
 
 
-function calculate_bare_shear_strength(inputs)
+function calculate_bare_shear_strength(inputs, S100_version)
 
     (;     
     t, 
@@ -70,35 +72,39 @@ function calculate_bare_shear_strength(inputs)
 
     Vcr = AISIS100.v16S3.g231(h, t, Fcr)
 
-    design_code = "AISI S100-16 ASD"
-    Vn_web, aVn_web_ASD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, design_code)
+    if S100_version == "v24"
+        Vn_web, aVn_web_ASD  = v2024.g2_1__1_2_3(Vcr, Vy, "ASD")
+        Vn_web, aVn_web_LRFD = v2024.g2_1__1_2_3(Vcr, Vy, "LRFD")
+    else  # v16
+        Vn_web, aVn_web_ASD  = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, "AISI S100-16 ASD")
+        Vn_web, aVn_web_LRFD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, "AISI S100-16 LRFD")
+    end
 
-    design_code = "AISI S100-16 LRFD"
-    Vn_web, aVn_web_LRFD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, design_code)
-
-    Vn_unit = Vn_web * number_of_webs_per_panel / unit_width
+    Vn_unit      = Vn_web      * number_of_webs_per_panel / unit_width
     aVn_unit_ASD = aVn_web_ASD * number_of_webs_per_panel / unit_width
-    aVn_unit_LRFD = aVn_web_LRFD * number_of_webs_per_panel / unit_width
+    aVn_unit_LRFD= aVn_web_LRFD* number_of_webs_per_panel / unit_width
 
+    outputs = BareShearOutputs(
+        inputs,
 
-    outputs =    BareShearOutputs(
-        inputs, 
+        h,
 
-        h, 
-
-        Aw, 
-        Vy, 
+        Aw,
+        Vy,
 
         Fcr,
-        Vcr, 
+        Vcr,
 
-        Vn_web, 
-        aVn_web_ASD, 
-        aVn_web_LRFD, 
+        Vn_web,
 
-        Vn_unit, 
+        aVn_web_ASD,
+        aVn_web_LRFD,
+
+        Vn_unit,
+
         aVn_unit_ASD,
-        aVn_unit_LRFD 
+        aVn_unit_LRFD,
+
     )
 
 
