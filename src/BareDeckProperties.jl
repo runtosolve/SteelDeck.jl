@@ -27,68 +27,60 @@ struct BareDeckInputs
 
     half_wavelengths
 
-end
-
-
-struct BareDeckBaseOutputs
-
-    inputs
-
-    section_properties
-
-    local_buckling_pos
-    local_buckling_neg
-
-    Mcrℓ_pos
-    Mcrℓ_neg
-
-    Mcrℓ_pos_unit
-    Mcrℓ_neg_unit
-
-    y_top
-    y_bottom
-
-    Ixx
-    Ixx_unit
-
-    S_pos_unit
-    S_neg_unit
-    Sp_unit
+    design_method
 
 end
 
 
-struct BareDeckOutputs
+Base.@kwdef struct BareDeckOutputs
 
-    base_outputs
+    inputs = nothing
 
-    t_mm
-    t_in
+    section_properties = nothing
 
-    fy
+    local_buckling_pos = nothing
+    local_buckling_neg = nothing
 
-    My_pos_unit
-    My_neg_unit
-    My_unit
-    M_plastic_unit
+    Mcrℓ_pos = nothing
+    Mcrℓ_neg = nothing
 
-    Mnℓ_pos_unit
-    Mnℓ_neg_unit
+    Mcrℓ_pos_unit = nothing
+    Mcrℓ_neg_unit = nothing
 
-    aMnℓ_pos_unit_ASD
-    aMnℓ_neg_unit_ASD
+    y_top = nothing
+    y_bottom = nothing
 
-    aMnℓ_pos_unit_LRFD
-    aMnℓ_neg_unit_LRFD
+    Ixx = nothing
+    Ixx_unit = nothing
 
-    Md_pos_unit
-    Md_neg_unit
+    S_pos_unit = nothing
+    S_neg_unit = nothing
+    Sp_unit = nothing
 
-    I_eff_pos_unit
-    I_eff_neg_unit
 
-    S_pos_eff_unit
-    S_neg_eff_unit
+    t = nothing
+
+    fy = nothing
+
+    My_pos_unit = nothing
+    My_neg_unit = nothing
+    My_unit = nothing
+    M_plastic_unit = nothing
+
+    Mnℓ_pos_unit = nothing
+    Mnℓ_neg_unit = nothing
+
+    aMnℓ_pos_unit = nothing
+    aMnℓ_neg_unit = nothing
+
+    Md_pos_unit = nothing
+    Md_neg_unit = nothing
+
+    I_eff_pos_unit = nothing
+    I_eff_neg_unit = nothing
+
+    S_pos_eff_unit = nothing
+    S_neg_eff_unit = nothing
 
 end
 
@@ -203,7 +195,7 @@ function calculate_bare_deck_base_properties(inputs)
     S_pos_unit = Ixx_unit / y_top
     S_neg_unit = Ixx_unit / y_bottom
 
-    base_outputs = BareDeckBaseOutputs(
+    outputs = BareDeckOutputs(;
 
         inputs,
 
@@ -230,7 +222,7 @@ function calculate_bare_deck_base_properties(inputs)
 
     )
 
-    return base_outputs
+    return outputs
 
 end
 
@@ -239,8 +231,8 @@ function calculate_bare_deck_properties(base_outputs, fy, S100_version)
 
     #Unpack base outputs:
     (;
-    t_mm,
-    t_in,
+
+    t,
     Mcrℓ_pos_unit,
     Mcrℓ_neg_unit,
     y_top,
@@ -252,7 +244,8 @@ function calculate_bare_deck_properties(base_outputs, fy, S100_version)
     inputs,
     ) = base_outputs
 
-    panel_depth = inputs.panel_depth
+    panel_depth   = inputs.panel_depth
+    design_method = inputs.design_method
 
     #Calculate plastic moment per unit width:
     M_plastic_unit = Sp_unit * fy
@@ -271,50 +264,59 @@ function calculate_bare_deck_properties(base_outputs, fy, S100_version)
 
         #Calculate Mnl (positive):
         βs_pos = max(2*y_top/d, 0.4)
-        Mnℓ_pos_unit, aMnℓ_pos_unit_ASD  = v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "ASD")
-        Mnℓ_pos_unit, aMnℓ_pos_unit_LRFD = v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "LRFD")
+        Mnℓ_pos_unit, aMnℓ_pos_unit = AISIS100.v2024.f32(My_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, design_method)
 
         #Calculate Mnl (negative):
         βs_neg = max(2*y_bottom/d, 0.4)
-        Mnℓ_neg_unit, aMnℓ_neg_unit_ASD  = v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "ASD")
-        Mnℓ_neg_unit, aMnℓ_neg_unit_LRFD = v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "LRFD")
+        Mnℓ_neg_unit, aMnℓ_neg_unit = AISIS100.v2024.f32(My_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, design_method)
 
         #Calculate the effective moment of inertia and section moduli:
-        Md_pos_unit, _ = v2024.f32(aMnℓ_pos_unit_ASD, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, "ASD")
-        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit_ASD, Ixx_unit)
+        Md_pos_unit, _ = AISIS100.v2024.f32(aMnℓ_pos_unit, Mcrℓ_pos_unit, ks, αs, βs_pos, My3, design_method)
+        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit, Ixx_unit)
         S_pos_eff_unit = I_eff_pos_unit / y_top
 
-        Md_neg_unit, _ = v2024.f32(aMnℓ_neg_unit_ASD, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, "ASD")
-        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
+        Md_neg_unit, _ = AISIS100.v2024.f32(aMnℓ_neg_unit, Mcrℓ_neg_unit, ks, αs, βs_neg, My3, design_method)
+        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit, Ixx_unit)
         S_neg_eff_unit = I_eff_neg_unit / y_bottom
 
     else  # v16
 
-        #Calculate ASD Mnl:
-        Mnℓ_pos_unit, aMnℓ_pos_unit_ASD  = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, "AISI S100-16 ASD")
-        Mnℓ_neg_unit, aMnℓ_neg_unit_ASD  = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, "AISI S100-16 ASD")
+        method_str = "AISI S100-16 $design_method"
 
-        #Calculate LRFD Mnl:
-        Mnℓ_pos_unit, aMnℓ_pos_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, "AISI S100-16 LRFD")
-        Mnℓ_neg_unit, aMnℓ_neg_unit_LRFD = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, "AISI S100-16 LRFD")
+        Mnℓ_pos_unit, aMnℓ_pos_unit = AISIS100.v16S3.f321(My_unit, Mcrℓ_pos_unit, method_str)
+        Mnℓ_neg_unit, aMnℓ_neg_unit = AISIS100.v16S3.f321(My_unit, Mcrℓ_neg_unit, method_str)
 
         #Calculate the effective moment of inertia and section moduli:
-        Md_pos_unit, _ = AISIS100.v16S3.f321(aMnℓ_pos_unit_ASD, Mcrℓ_pos_unit, "AISI S100-16 LRFD")
-        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit_ASD, Ixx_unit)
+        Md_pos_unit, _ = AISIS100.v16S3.f321(aMnℓ_pos_unit, Mcrℓ_pos_unit, method_str)
+        I_eff_pos_unit = AISIS100.v16S3.l21(Md_pos_unit, aMnℓ_pos_unit, Ixx_unit)
         S_pos_eff_unit = I_eff_pos_unit / y_top
 
-        Md_neg_unit, _ = AISIS100.v16S3.f321(aMnℓ_neg_unit_ASD, Mcrℓ_neg_unit, "AISI S100-16 LRFD")
-        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit_ASD, Ixx_unit)
+        Md_neg_unit, _ = AISIS100.v16S3.f321(aMnℓ_neg_unit, Mcrℓ_neg_unit, method_str)
+        I_eff_neg_unit = AISIS100.v16S3.l21(Md_neg_unit, aMnℓ_neg_unit, Ixx_unit)
         S_neg_eff_unit = I_eff_neg_unit / y_bottom
 
     end
 
-    outputs = BareDeckOutputs(
+    outputs = BareDeckOutputs(;
 
-        base_outputs,
+        inputs            = base_outputs.inputs,
+        section_properties = base_outputs.section_properties,
+        local_buckling_pos = base_outputs.local_buckling_pos,
+        local_buckling_neg = base_outputs.local_buckling_neg,
+        Mcrℓ_pos          = base_outputs.Mcrℓ_pos,
+        Mcrℓ_neg          = base_outputs.Mcrℓ_neg,
+        Mcrℓ_pos_unit     = base_outputs.Mcrℓ_pos_unit,
+        Mcrℓ_neg_unit     = base_outputs.Mcrℓ_neg_unit,
+        y_top             = base_outputs.y_top,
+        y_bottom          = base_outputs.y_bottom,
+        Ixx               = base_outputs.Ixx,
+        Ixx_unit          = base_outputs.Ixx_unit,
+        S_pos_unit        = base_outputs.S_pos_unit,
+        S_neg_unit        = base_outputs.S_neg_unit,
+        Sp_unit           = base_outputs.Sp_unit,
 
-        t_mm,
-        t_in,
+
+        t,
 
         fy,
 
@@ -326,11 +328,8 @@ function calculate_bare_deck_properties(base_outputs, fy, S100_version)
         Mnℓ_pos_unit,
         Mnℓ_neg_unit,
 
-        aMnℓ_pos_unit_ASD,
-        aMnℓ_neg_unit_ASD,
-
-        aMnℓ_pos_unit_LRFD,
-        aMnℓ_neg_unit_LRFD,
+        aMnℓ_pos_unit,
+        aMnℓ_neg_unit,
 
         Md_pos_unit,
         Md_neg_unit,
@@ -346,49 +345,3 @@ function calculate_bare_deck_properties(base_outputs, fy, S100_version)
     return outputs
 
 end
-
-
-
-# function calculate_all_bare_properties(inputs)
-
-#     #t should be a vector here
-#     cross_section, t, fy, half_wavelengths, E, panel_depth, unit_width = inputs
-
-#     bare_geometry_all = Vector{SteelDeck.BareGeometry}(undef, length(t))
-#     bare_properties_all = Vector{SteelDeck.BareProperties}(undef, length(t))
-
-#     for i in eachindex(t)
-
-#         #Zero cross-section considering thickness:
-
-#         X = [cross_section[i][1] for i in eachindex(cross_section)];
-#         Y = [cross_section[i][2] for i in eachindex(cross_section)];
-
-#         ΔX = -minimum(X)
-#         ΔY = -minimum(Y) + t[i] / 2
-
-#         X .+= ΔX
-#         Y .+= ΔY
-
-#         cross_section = [[X[i], Y[i]] for i in eachindex(cross_section)]
-
-#         bare_geometry_all[i] = SteelDeck.BareGeometry(
-
-#             t[i],
-
-#             cross_section,
-#             X,
-#             Y
-#         )
-
-#         inputs = (cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width)
-
-#         cross_section, t[i], fy, half_wavelengths, E, panel_depth, unit_width = inputs
-
-#         bare_properties_all[i] = SteelDeck.calculate_bare_properties(inputs)
-
-#     end
-
-#     return bare_geometry_all, bare_properties_all
-
-# end
