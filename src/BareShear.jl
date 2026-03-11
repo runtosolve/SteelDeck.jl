@@ -1,48 +1,50 @@
 
-struct BareShearInputs 
+struct BareShearInputs
 
-    t 
-    Fy 
-    E 
+    t
+    Fy
+    E
     μ
-    kv 
+    kv
 
-    steel_deck_depth 
+    steel_deck_depth
     steel_deck_web_angle_from_horizon
-    steel_deck_outside_radius 
+    steel_deck_outside_radius
     number_of_webs_per_panel
 
-    unit_width 
+    unit_width
+
+    design_method
 
 end
 
 
 
 struct BareShearOutputs
-        
-    inputs 
 
-    h 
+    inputs
 
-    Aw 
-    Vy 
+    h
+
+    Aw
+    Vy
 
     Fcr
-    Vcr 
+    Vcr
 
-    Vn_web 
-    aVn_web_ASD 
-    aVn_web_LRFD 
+    Vn_web
 
-    Vn_unit 
-    aVn_unit_ASD
-    aVn_unit_LRFD 
+    aVn_web
+
+    Vn_unit
+
+    aVn_unit
 
 end
 
 
 
-function calculate_bare_shear_strength(inputs)
+function calculate_bare_shear_strength(inputs, S100_version)
 
     (;     
     t, 
@@ -56,9 +58,11 @@ function calculate_bare_shear_strength(inputs)
     steel_deck_outside_radius, 
     number_of_webs_per_panel,
 
-    unit_width 
+    unit_width,
 
-    ) = inputs 
+    design_method,
+
+    ) = inputs
 
 
     h = steel_deck_depth / sind(steel_deck_web_angle_from_horizon) - 2 * steel_deck_outside_radius
@@ -70,35 +74,34 @@ function calculate_bare_shear_strength(inputs)
 
     Vcr = AISIS100.v16S3.g231(h, t, Fcr)
 
-    design_code = "AISI S100-16 ASD"
-    Vn_web, aVn_web_ASD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, design_code)
+    if S100_version == "v24"
+        Vn_web, aVn_web = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_method)
+    else  # v16
+        Vn_web, aVn_web = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, "AISI S100-16 $design_method")
+    end
 
-    design_code = "AISI S100-16 LRFD"
-    Vn_web, aVn_web_LRFD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, design_code)
+    Vn_unit  = Vn_web  * number_of_webs_per_panel / unit_width
+    aVn_unit = aVn_web * number_of_webs_per_panel / unit_width
 
-    Vn_unit = Vn_web * number_of_webs_per_panel / unit_width
-    aVn_unit_ASD = aVn_web_ASD * number_of_webs_per_panel / unit_width
-    aVn_unit_LRFD = aVn_web_LRFD * number_of_webs_per_panel / unit_width
+    outputs = BareShearOutputs(
+        inputs,
 
+        h,
 
-    outputs =    BareShearOutputs(
-        inputs, 
-
-        h, 
-
-        Aw, 
-        Vy, 
+        Aw,
+        Vy,
 
         Fcr,
-        Vcr, 
+        Vcr,
 
-        Vn_web, 
-        aVn_web_ASD, 
-        aVn_web_LRFD, 
+        Vn_web,
 
-        Vn_unit, 
-        aVn_unit_ASD,
-        aVn_unit_LRFD 
+        aVn_web,
+
+        Vn_unit,
+
+        aVn_unit,
+
     )
 
 
