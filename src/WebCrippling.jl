@@ -11,6 +11,8 @@ struct WebCripplingInputs
 
     bearing_width
 
+    design_method
+
 end
 
 
@@ -26,6 +28,8 @@ struct WebCripplingConditionInputs
     unit_width
 
     bearing_width
+
+    design_method
 
     N
     C
@@ -48,10 +52,8 @@ struct WebCripplingOutputs
     R
 
     Pn
-    aPn_ASD
-    aPn_LRFD
-    aPn_unit_ASD
-    aPn_unit_LRFD
+    aPn
+    aPn_unit
 end
 
 struct AllWebCripplingConditions
@@ -79,6 +81,8 @@ function calculate_web_crippling_strength(inputs)
 
     bearing_width,
 
+    design_method,
+
     N,
     C,
     C_R,
@@ -95,14 +99,8 @@ function calculate_web_crippling_strength(inputs)
     θ = steel_deck_web_angle_from_horizon
     R = steel_deck_outside_radius - t
 
-
-    design_code = "ASD"
-    Pn, aPn_ASD = v2024.g51(t, h, fy, θ, C, C_R, R, C_N, N, C_h, ϕ_w, Ω_w, ϕ_w_LSD, design_code)
-    aPn_unit_ASD = aPn_ASD * number_of_webs_per_panel / unit_width
-
-    design_code = "LRFD"
-    Pn, aPn_LRFD = v2024.g51(t, h, fy, θ, C, C_R, R, C_N, N, C_h, ϕ_w, Ω_w, ϕ_w_LSD, design_code)
-    aPn_unit_LRFD = aPn_LRFD * number_of_webs_per_panel / unit_width
+    Pn, aPn = v2024.g51(t, h, fy, θ, C, C_R, R, C_N, N, C_h, ϕ_w, Ω_w, ϕ_w_LSD, design_method)
+    aPn_unit = aPn * number_of_webs_per_panel / unit_width
 
 
     outputs = WebCripplingOutputs(
@@ -114,10 +112,8 @@ function calculate_web_crippling_strength(inputs)
                 R,
 
                 Pn,
-                aPn_ASD,
-                aPn_LRFD,
-                aPn_unit_ASD,
-                aPn_unit_LRFD,
+                aPn,
+                aPn_unit,
     )
 
     return outputs
@@ -140,6 +136,8 @@ function calculate_all_web_crippling_conditions(inputs)
 
     bearing_width,
 
+    design_method,
+
     ) = inputs
 
 
@@ -154,6 +152,7 @@ function calculate_all_web_crippling_conditions(inputs)
         number_of_webs_per_panel,
         unit_width,
         bearing_width,
+        design_method,
         bearing_width / 2,  # N
         4.0,                # C
         0.04,               # C_R
@@ -174,6 +173,7 @@ function calculate_all_web_crippling_conditions(inputs)
         number_of_webs_per_panel,
         unit_width,
         bearing_width,
+        design_method,
         bearing_width / 2,  # N
         9.0,                # C
         0.12,               # C_R
@@ -194,6 +194,7 @@ function calculate_all_web_crippling_conditions(inputs)
         number_of_webs_per_panel,
         unit_width,
         bearing_width,
+        design_method,
         bearing_width,      # N
         8.0,                # C
         0.10,               # C_R
@@ -214,6 +215,7 @@ function calculate_all_web_crippling_conditions(inputs)
         number_of_webs_per_panel,
         unit_width,
         bearing_width,
+        design_method,
         bearing_width,      # N
         10.0,               # C
         0.11,               # C_R
