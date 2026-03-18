@@ -19,10 +19,12 @@ struct CompositeFlexuralInputs
 
     Fy
 
-    Es 
-    Wc 
-    fc 
+    Es
+    Wc
+    fc
     β1
+
+    design_method
 
 end
 
@@ -64,14 +66,12 @@ struct CompositeFlexuralOutputs
     c_over_d 
     c_over_d_b
 
-    Mno_ASD
-    Mno_LRFD
+    Mno
 
     ϵcu
-    m 
+    m
     c
-    Mro_ASD 
-    Mro_LRFD 
+    Mro
    
 end
 
@@ -96,12 +96,14 @@ function calculate_composite_flexural_properties(inputs)
 
     Fy,
 
-    Es, 
-    Wc, 
-    fc, 
-    β1
+    Es,
+    Wc,
+    fc,
+    β1,
 
-    ) = inputs 
+    design_method,
+
+    ) = inputs
 
 
     Wr = mean(deck_rib_widths)
@@ -159,59 +161,58 @@ function calculate_composite_flexural_properties(inputs)
         K = SDIComposite.C2017.EqA2__10(K1, K3)
 
     if c_over_d < c_over_d_b
-        Mno_ASD =  SDIComposite.C2017.EqA2__15(K, My)
-        Mno_LRFD =  SDIComposite.C2017.EqA2__16(K, My)
 
-        outputs = CompositeFlexuralOutputs( 
+        if design_method == "ASD"
+            Mno = SDIComposite.C2017.EqA2__15(K, My)
+        elseif design_method == "LRFD"
+            Mno = SDIComposite.C2017.EqA2__16(K, My)
+        end
 
-            inputs, 
-        
-            b, 
-            Ec, 
-            n, 
-            hc, 
-            d, 
+        outputs = CompositeFlexuralOutputs(
+
+            inputs,
+
+            b,
+            Ec,
+            n,
+            hc,
+            d,
             Wr,
             Cs,
-        
+
             ycc_uncracked,
             ycs_uncracked,
             Iu,
             Id,
 
-            ρ, 
+            ρ,
 
-            ycc, 
-            ycs, 
-            
-            As, 
-            Isf, 
-            
-            Icr, 
-        
-            K1, 
-            K3, 
-            K, 
-        
-            My, 
-        
-            c_over_d, 
+            ycc,
+            ycs,
+
+            As,
+            Isf,
+
+            Icr,
+
+            K1,
+            K3,
+            K,
+
+            My,
+
+            c_over_d,
             c_over_d_b,
-        
-            Mno_ASD,
-            Mno_LRFD,
-        
+
+            Mno,
+
             nothing,
-            nothing, 
             nothing,
-            nothing, 
-            nothing
-        ) 
-        
+            nothing,
+            nothing,
+        )
 
-
-
-    else 
+    else
 
         ϵcu = 0.003
 
@@ -219,56 +220,55 @@ function calculate_composite_flexural_properties(inputs)
 
         c = SDIComposite.C2017.EqA2__18(d, ρ, m)
 
-        Mro_LRFD = SDIComposite.C2017.EqA2__17a(fc, b, β1, c, d, My, K)
+        if design_method == "ASD"
+            Mro = SDIComposite.C2017.EqA2__17b(fc, b, β1, c, d, My, K)
+        elseif design_method == "LRFD"
+            Mro = SDIComposite.C2017.EqA2__17a(fc, b, β1, c, d, My, K)
+        end
 
-        Mro_ASD = SDIComposite.C2017.EqA2__17b(fc, b, β1, c, d, My, K)
+        outputs = CompositeFlexuralOutputs(
 
+            inputs,
 
-        outputs = CompositeFlexuralOutputs( 
-
-            inputs, 
-        
-            b, 
-            Ec, 
-            n, 
-            hc, 
+            b,
+            Ec,
+            n,
+            hc,
             d,
-            Wr, 
+            Wr,
             Cs,
-        
+
             ycc_uncracked,
             ycs_uncracked,
             Iu,
             Id,
 
-            ρ, 
+            ρ,
 
-            ycc, 
-            ycs, 
-            
-            As, 
-            Isf, 
-            
-            Icr, 
-        
-            K1, 
-            K3, 
-            K, 
-        
-            My, 
-        
-            c_over_d, 
+            ycc,
+            ycs,
+
+            As,
+            Isf,
+
+            Icr,
+
+            K1,
+            K3,
+            K,
+
+            My,
+
+            c_over_d,
             c_over_d_b,
-        
+
             nothing,
-            nothing,
-        
+
             ϵcu,
-            m, 
+            m,
             c,
-            Mro_ASD, 
-            Mro_LRFD
-        ) 
+            Mro,
+        )
 
     end
 
