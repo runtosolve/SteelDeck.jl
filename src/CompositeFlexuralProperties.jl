@@ -23,7 +23,7 @@ struct CompositeFlexuralInputs
     Wc
     fc
     β1
-    embossement_type
+    embossment_type
     t
     ps1
     ps2
@@ -33,8 +33,8 @@ struct CompositeFlexuralInputs
 
 end
 
-function CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossement_type, t, design_method, L; ps1=0, ps2=0)
-    CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossement_type, t, ps1, ps2, design_method, L)
+function CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, design_method, L; ps1=0, ps2=0)
+    CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, ps1, ps2, design_method, L)
 end
 
 
@@ -104,7 +104,7 @@ function calculate_composite_flexural_properties(inputs)
     Wc,
     fc,
     β1,
-    embossement_type,
+    embossment_type,
     t,
     ps1,
     ps2,
@@ -157,16 +157,16 @@ function calculate_composite_flexural_properties(inputs)
 
     Id = SDIComposite.C2022.EqC_F2_3_5(Iu, Icr)
 
-    if embossement_type == "type_1"
+    if embossment_type == "type_1"
             K1 = SDIComposite.C2022.EqF3_2__7_type_1(Dw, ph)
-    elseif embossement_type == "type_2"
+    elseif embossment_type == "type_2"
             K1 = SDIComposite.C2022.EqF3_2__8_type_2(t, Dw, ph)
-    elseif embossement_type == "type_3"
+    elseif embossment_type == "type_3"
             K11 = SDIComposite.C2022.EqF3_2__7_type_1(Dw, ph)
             K12 = SDIComposite.C2022.EqF3_2__8_type_2(t, Dw, ph)
             K1 = SDIComposite.C2022.EqF3_2__9_type_3(K11, K12, ps1, ps2)
     else
-        error("Invalid embossement type. Must be type_1, type_2, or type_3.")
+        error("Invalid embossment type. Must be type_1, type_2, or type_3.")
     end
 
     K3 = 1.4
