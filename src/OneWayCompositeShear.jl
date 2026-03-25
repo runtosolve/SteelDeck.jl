@@ -90,12 +90,12 @@ function calculate_one_way_composite_shear_strength(inputs)
     Ac = mean([steel_deck_trough_width, steel_deck_trough_width + 2 * Δ_pitch]) * total_slab_depth
 
 
-    Vc = SDIComposite.C2017.Eq2_4_8_a(λ, fc, Ac)
+    Vc = SDIComposite.C2022.EqF_4_3a(λ, fc, Ac)
 
     if design_method == "ASD"
-        aVn_per_pitch = SDIComposite.C2017.Eq2_4_7c(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch 
+        aVn_per_pitch = SDIComposite.C2022.EqF_4_1a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch 
     elseif design_method == "LRFD"
-        aVn_per_pitch = SDIComposite.C2017.Eq2_4_7a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch
+        aVn_per_pitch = SDIComposite.C2022.EqF_4_2a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch
     end
 
     aVn_unit = (aVn_per_pitch * number_of_troughs_in_panel) / unit_width
