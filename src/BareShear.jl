@@ -73,11 +73,16 @@ function calculate_bare_shear_strength(inputs, S100_version)
     Fcr = AISIS100.v16S3.g232(E, μ, kv, h, t)
 
     Vcr = AISIS100.v16S3.g231(h, t, Fcr)
-
+    
     if S100_version == "v24"
-        Vn_web, aVn_web = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_method)
+        Vn_web_inclined, aVn_web_inclined = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_method)
+        Vn_web = Vn_web_inclined * sind(steel_deck_web_angle_from_horizon)
+        aVn_web = aVn_web_inclined * sind(steel_deck_web_angle_from_horizon)
+
     else  # v16
-        Vn_web, aVn_web = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, "AISI S100-16 $design_method")
+        Vn_web_inclined, aVn_web_inclined = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, "AISI S100-16 $design_method")
+        Vn_web = Vn_web_inclined * sind(steel_deck_web_angle_from_horizon)
+        aVn_web = aVn_web_inclined * sind(steel_deck_web_angle_from_horizon)
     end
 
     Vn_unit  = Vn_web  * number_of_webs_per_panel / unit_width
