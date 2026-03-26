@@ -81,8 +81,9 @@ function calculate_one_way_composite_shear_strength(inputs)
     Vcr = AISIS100.v16S3.g231(h, t, Fcr)
 
     design_code = "nominal"
-    VD, aVD = AISIS100.v16S3.g2_1__1_2_3(Vcr, Vy, design_code)
-
+    VD_inclined, aVD_inclined = AISIS100.v2024.g2_1__1_2_3(Vcr, Vy, design_code)
+    VD = VD_inclined * sind(steel_deck_web_angle_from_horizon)
+    aVD = aVD_inclined * sind(steel_deck_web_angle_from_horizon)
 
     #####concrete strength 
 
@@ -93,9 +94,9 @@ function calculate_one_way_composite_shear_strength(inputs)
     Vc = SDIComposite.C2022.EqF_4_3a(λ, fc, Ac)
 
     if design_method == "ASD"
-        aVn_per_pitch = SDIComposite.C2022.EqF_4_1a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch 
+        aVn_per_pitch = SDIComposite.C2022.EqF_4_2a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch 
     elseif design_method == "LRFD"
-        aVn_per_pitch = SDIComposite.C2022.EqF_4_2a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch
+        aVn_per_pitch = SDIComposite.C2022.EqF_4_1a(Vc, 2 * VD, fc, Ac) #2 * VD for two webs per pitch
     end
 
     aVn_unit = (aVn_per_pitch * number_of_troughs_in_panel) / unit_width
