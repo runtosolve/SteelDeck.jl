@@ -12,6 +12,8 @@ include("BareShear.jl")
 
 include("OneWayCompositeShear.jl")
 
+include("ConstructionLoads.jl")
+
 include("ConstructionSpans.jl")
 
 include("SuperimposedLoads.jl")
