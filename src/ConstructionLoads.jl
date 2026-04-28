@@ -1,7 +1,7 @@
 
 
 
-struct ConstructionLoadsInputs
+struct ConstructionLoadInputs
 
     P
     W1
@@ -18,7 +18,7 @@ struct ConstructionLoadsInputs
 end
 
 
-struct ConstructionLoadsOutputs
+struct ConstructionLoadOutputs
 
     inputs
 
@@ -208,7 +208,7 @@ function triple_span_M_V(p)
 end
 
 
-function Construction_loads(inputs::ConstructionLoadsInputs, configuration::AbstractString)
+function construction_loads(inputs::ConstructionLoadInputs, configuration::AbstractString)
 
     p_load       = (inputs.P, inputs.W1, inputs.W2, inputs.W3, inputs.L)
     p_deflection = (inputs.W1, inputs.L, inputs.E, inputs.I)
@@ -254,7 +254,7 @@ function Construction_loads(inputs::ConstructionLoadsInputs, configuration::Abst
 
     interaction = AISIS100.v16S3.h21(Mbar, Vbar, inputs.aMn, inputs.aVn)
 
-    return ConstructionLoadsOutputs(
+    return ConstructionLoadOutputs(
         inputs,
         M_plus_1, M_plus_2, M_plus_3, M_plus,
         M_neg_1, M_neg_2, M_neg,
