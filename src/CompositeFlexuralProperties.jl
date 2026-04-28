@@ -29,12 +29,12 @@ struct CompositeFlexuralInputs
     ps2
     design_method
 
-    L
+
 
 end
 
-function CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, design_method, L; ps1=0, ps2=0)
-    CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, ps1, ps2, design_method, L)
+function CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, design_method; ps1=0, ps2=0)
+    CompositeFlexuralInputs(panel_width, dd, Dw, ph, As_whole_panel, yc_steel, Ixx_steel_whole_panel, deck_rib_widths, deck_rib_pitch, h, unit_width, Fy, Es, Wc, fc, β1, embossment_type, t, ps1, ps2, design_method)
 end
 
 
@@ -110,7 +110,7 @@ function calculate_composite_flexural_properties(inputs)
     ps2,
     design_method,
 
-    L,
+    
 
     ) = inputs
 
@@ -181,7 +181,7 @@ function calculate_composite_flexural_properties(inputs)
     K = SDIComposite.C2022.EqF_3_2__6(K1, K3)
 
 
-    Mn = SDIComposite.C2022.EqF3_2__10(K, My, L, design_method)
+    Mn = SDIComposite.C2022.EqF3_2__10(K, My, design_method)
 
     outputs = CompositeFlexuralOutputs(
 
