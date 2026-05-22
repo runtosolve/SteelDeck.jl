@@ -12,8 +12,10 @@ struct ConstructionLoadInputs
     E
     I
 
-    aMn
-    aVn
+    aMn       # per-ft capacity (lb·in/ft)
+    aVn       # per-ft capacity (lb/ft)
+
+    unit_width  # strip width in ft — used to normalise strip-total demands to per-ft for interaction check
 
 end
 
@@ -252,7 +254,7 @@ function construction_loads(inputs::ConstructionLoadInputs, configuration::Abstr
         error("Configuration must be \"Single\", \"Double\", or \"Triple\"")
     end
 
-    interaction = AISIS100.v16S3.h21(Mbar, Vbar, inputs.aMn, inputs.aVn)
+    interaction = AISIS100.v16S3.h21(Mbar / inputs.unit_width, Vbar / inputs.unit_width, inputs.aMn, inputs.aVn)
 
     return ConstructionLoadOutputs(
         inputs,
