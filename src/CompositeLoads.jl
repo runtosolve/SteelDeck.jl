@@ -2,6 +2,7 @@
 struct CompositeLoadInputs
 
     L   # span length
+    N   # support bearing width
     w   # vector of UDL intensities (force per length)
     a   # vector of UDL start positions from left support
     b   # vector of UDL end positions from left support
@@ -18,13 +19,15 @@ struct CompositeLoadOutputs
     V_max   # maximum shear (at supports)
     M_max   # maximum bending moment
     x_max_M # location of maximum bending moment
+    V_edge  # shear at support edge (governing)
+    M_edge  # moment at support edge (governing)
 
 end
 
 
 function composite_loads(inputs::CompositeLoadInputs)
 
-    (; L, w, a, b) = inputs
+    (; L, N, w, a, b) = inputs
 
     n = length(w)
 
@@ -63,6 +66,9 @@ function composite_loads(inputs::CompositeLoadInputs)
 
     V_max = max(abs(Ra), abs(Rb))
 
-    return CompositeLoadOutputs(inputs, Ra, Rb, V_max, M_max, x_max_M)
+    V_edge = max(abs(V(N)), abs(V(L - N)))
+    M_edge = max(abs(M(N)), abs(M(L - N)))
+
+    return CompositeLoadOutputs(inputs, Ra, Rb, V_max, M_max, x_max_M, V_edge, M_edge)
 
 end
