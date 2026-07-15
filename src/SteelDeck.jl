@@ -22,6 +22,8 @@ include("SuperimposedLoads.jl")
 
 include("CompositeLoads.jl")
 
+include("ConstructionLoadsUnequalSpans.jl")
+
 include("DeckTables.jl")
 
 end # module SteelDeck
