@@ -1,17 +1,15 @@
 
 # ============================================================================
-# TWO-SPAN CONTINUOUS BEAM  (unequal spans allowed)
+# TWO-SPAN CONTINUOUS BEAM  (unequal spans)
 #
 # Layout:   A ----------- span 1 (L1) ----------- B ----------- span 2 (L2) ----------- C
 #           simple support            simple support             simple support
 #
 # This file solves the extra ("continuous") support at B with Clapeyron's
 # three-moment theorem — see the explanation right before
-# `construction_loads_unequal_spans` below. Everything in it is exact: no numerical
-# grid, no convergence to worry about, just closed-form formulas and exact
-# root-finding.
+# `construction_loads_unequal_spans` below. 
 #
-# Loads (point, patch/UDL, or a mix) are given as plain lists, and every
+# Loads (point, patch/UDL) are given as plain lists, and every
 # position is measured from support A along the whole beam (so a load in
 # span 2 has a position bigger than L1).
 # ============================================================================
