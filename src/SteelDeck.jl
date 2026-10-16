@@ -1,6 +1,6 @@
 module SteelDeck
 
-using CUFSM, SectionProperties, AISIS100, SDIComposite, OrderedCollections, NonlinearSolve, Statistics, CrossSectionGeometry, DataFrames
+using CUFSM, SectionProperties, AISIS100, SDIComposite, OrderedCollections, BracketingNonlinearSolve, Statistics, CrossSectionGeometry, DataFrames
 
 include("BareDeckProperties.jl")
 
